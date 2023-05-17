@@ -1,0 +1,9 @@
+<resources>
+    <string name="app_name">Calendar Widget</string>
+    <string name="appwidget_text">EXAMPLE</string>
+    <string name="app_widget_description">Calendar Widget</string>
+    <string name="background_opacity">Background Opacity</string>
+    <string name="apply">Apply</string>
+    <string name="dark_background">Dark Background</string>
+    <string name="calendar_widget_config">Calendar Widget Config</string>
+</resources>

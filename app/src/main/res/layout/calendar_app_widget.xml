@@ -1,0 +1,35 @@
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@android:id/background"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@drawable/app_widget_background"
+    android:padding="?attr/appWidgetPadding"
+    android:theme="@style/Theme.AndroidCalendarWidget.AppWidgetContainer">
+
+    <FrameLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentEnd="true"
+        android:layout_marginTop="8dp">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="TESTING" />
+
+    </FrameLayout>
+
+    <TextView
+        android:id="@+id/appwidget_text"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_margin="8dp"
+        android:background="@drawable/app_widget_inner_view_background"
+        android:clipToOutline="true"
+        android:contentDescription="@string/appwidget_text"
+        android:padding="?attr/appWidgetPadding"
+        android:text="@string/appwidget_text"
+        android:textColor="?android:attr/textColorPrimary"
+        android:textSize="24sp"
+        android:textStyle="bold|italic" />
+</RelativeLayout>
