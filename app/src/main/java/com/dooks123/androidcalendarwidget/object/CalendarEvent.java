@@ -46,9 +46,6 @@ public class CalendarEvent {
     private String UID_2445;
     private boolean VISIBLE;
 
-    public CalendarEvent() {
-    }
-
     public CalendarEvent(Cursor cursor) {
         int indexID = cursor.getColumnIndex(CalendarContract.Events._ID);
         int indexCALENDAR_ID = cursor.getColumnIndex(CalendarContract.Events.CALENDAR_ID);

@@ -3,7 +3,7 @@
     android:id="@+id/root"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/teal_700">
+    android:background="@color/black">
 
     <TextView
         android:id="@+id/centerText"
@@ -11,6 +11,7 @@
         android:layout_height="wrap_content"
         android:layout_gravity="center"
         android:gravity="center"
-        android:text="This is a text view" />
+        android:text="@string/nothing_to_show"
+        android:textColor="@color/white" />
 
 </LinearLayout>

@@ -4,15 +4,14 @@ import android.app.Activity;
 import android.appwidget.AppWidgetManager;
 import android.content.Context;
 import android.content.Intent;
-import android.content.SharedPreferences;
 import android.graphics.Color;
 import android.graphics.drawable.PaintDrawable;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.View;
 import android.widget.CompoundButton;
 import android.widget.LinearLayout;
 import android.widget.SeekBar;
+import android.widget.TextView;
 
 import androidx.annotation.ColorInt;
 import androidx.appcompat.widget.AppCompatSeekBar;
@@ -21,34 +20,50 @@ import androidx.appcompat.widget.SwitchCompat;
 import com.dooks123.androidcalendarwidget.databinding.CalendarAppWidgetConfigureBinding;
 import com.dooks123.androidcalendarwidget.helpers.ResourceHelper;
 import com.dooks123.androidcalendarwidget.helpers.WindowHelper;
+import com.dooks123.androidcalendarwidget.object.CalendarEvent;
+import com.dooks123.androidcalendarwidget.prefs.CalendarAppSharedPreferences;
+import com.dooks123.androidcalendarwidget.queries.CalendarQuery;
+
+import java.text.SimpleDateFormat;
+import java.util.Calendar;
+import java.util.List;
+import java.util.Locale;
 
 public class CalendarAppWidgetConfigureActivity extends Activity {
-
-    private static final String PREFS_NAME = "com.dooks123.androidcalendarwidget.CalendarAppWidget";
-    private static final String PREF_PREFIX_OPACITY_KEY = "appwidget_opacity_";
-    private static final String PREF_PREFIX_DARK_KEY = "appwidget_dark_";
     int mAppWidgetId = AppWidgetManager.INVALID_APPWIDGET_ID;
 
     int seekBarOpacityValue = 100;
     boolean darkBackground = true;
+    boolean darkText = false;
+
+    int widgetColumnSpan = 2;
+
+    int textColor = 0xff000000;
 
     AppWidgetManager appWidgetManager;
 
+    SwitchCompat darkTextSwitch;
     SwitchCompat darkBackgroundSwitch;
     AppCompatSeekBar seekBarBackgroundOpacity;
     View calendarAppWidgetView;
     View calendarAppWidgetRootView;
 
+    CompoundButton.OnCheckedChangeListener darkTextListener = (buttonView, isChecked) -> {
+        darkText = isChecked;
+        textColor = darkText ? 0xff000000 : 0xffffffff;
+        setWidgetStyle();
+    };
+
     CompoundButton.OnCheckedChangeListener darkBackgroundListener = (buttonView, isChecked) -> {
         darkBackground = isChecked;
-        setCalendarAppWidgetRootViewBackground();
+        setWidgetStyle();
     };
 
     SeekBar.OnSeekBarChangeListener seekBarBackgroundOpacityListener = new SeekBar.OnSeekBarChangeListener() {
         @Override
         public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
             seekBarOpacityValue = progress;
-            setCalendarAppWidgetRootViewBackground();
+            setWidgetStyle();
         }
 
         @Override
@@ -66,14 +81,12 @@ public class CalendarAppWidgetConfigureActivity extends Activity {
         final Context context = CalendarAppWidgetConfigureActivity.this;
 
         // When the button is clicked, store the string locally
-        saveBackgroundOpacityPref(context, mAppWidgetId, seekBarOpacityValue);
-        saveDarkBackgroundPref(context, mAppWidgetId, darkBackground);
+        CalendarAppSharedPreferences prefs = CalendarAppSharedPreferences.getInstance();
+        prefs.setInt(CalendarAppSharedPreferences.KEY_BACKGROUND_OPACITY, mAppWidgetId, seekBarOpacityValue);
+        prefs.setBoolean(CalendarAppSharedPreferences.KEY_BACKGROUND_DARK, mAppWidgetId, darkBackground);
+        prefs.setBoolean(CalendarAppSharedPreferences.KEY_TEXT_DARK, mAppWidgetId, darkText);
 
-        Bundle options = appWidgetManager.getAppWidgetOptions(mAppWidgetId);
-        int widgetRowSpan = (int) options.get("semAppWidgetRowSpan");
-        int widgetColumnSpan = (int) options.get("semAppWidgetColumnSpan");
-
-        CalendarAppWidget.updateAppWidget(context, appWidgetManager, mAppWidgetId, widgetRowSpan, widgetColumnSpan);
+        CalendarAppWidget.updateAppWidget(context, appWidgetManager, mAppWidgetId, widgetColumnSpan);
 
         // Make sure we pass back the original appWidgetId
         Intent resultValue = new Intent();
@@ -106,8 +119,15 @@ public class CalendarAppWidgetConfigureActivity extends Activity {
             return;
         }
 
-        seekBarOpacityValue = loadBackgroundOpacityPref(CalendarAppWidgetConfigureActivity.this, mAppWidgetId);
-        darkBackground = loadDarkBackgroundPref(CalendarAppWidgetConfigureActivity.this, mAppWidgetId);
+        init();
+    }
+
+    private void init() {
+        CalendarAppSharedPreferences prefs = CalendarAppSharedPreferences.getInstance();
+        seekBarOpacityValue = prefs.getInt(CalendarAppSharedPreferences.KEY_BACKGROUND_OPACITY, mAppWidgetId, seekBarOpacityValue);
+        darkBackground = prefs.getBoolean(CalendarAppSharedPreferences.KEY_BACKGROUND_DARK, mAppWidgetId, darkBackground);
+        darkText = prefs.getBoolean(CalendarAppSharedPreferences.KEY_TEXT_DARK, mAppWidgetId, darkText);
+        textColor = darkText ? 0xff000000 : 0xffffffff;
 
         CalendarAppWidgetConfigureBinding binding = CalendarAppWidgetConfigureBinding.inflate(getLayoutInflater());
 
@@ -120,15 +140,21 @@ public class CalendarAppWidgetConfigureActivity extends Activity {
         appWidgetManager = AppWidgetManager.getInstance(this);
         Bundle options = appWidgetManager.getAppWidgetOptions(mAppWidgetId);
 
+        widgetColumnSpan = (int) options.get("semAppWidgetColumnSpan");
+
         calendarAppWidgetRootView = calendarAppWidgetView.findViewById(android.R.id.background);
         LinearLayout.LayoutParams layoutParams = (LinearLayout.LayoutParams) calendarAppWidgetRootView.getLayoutParams();
         layoutParams.width = Math.min(ResourceHelper.getDP((int) options.get("appWidgetMaxWidth")) - 40, ResourceHelper.getScreenWidth() - 80);
         layoutParams.height = ResourceHelper.getDP((int) options.get("appWidgetMaxHeight") - 20);
 
-        setCalendarAppWidgetRootViewBackground();
+        setWidgetStyle();
 
         binding.previewContainer.addView(calendarAppWidgetView);
         binding.previewContainer.setBackgroundResource(R.drawable.calendar_widget_preview_rounded_corners);
+
+        darkTextSwitch = binding.darkText;
+        darkTextSwitch.setChecked(darkText);
+        darkTextSwitch.setOnCheckedChangeListener(darkTextListener);
 
         darkBackgroundSwitch = binding.darkBackground;
         darkBackgroundSwitch.setChecked(darkBackground);
@@ -148,9 +174,17 @@ public class CalendarAppWidgetConfigureActivity extends Activity {
     @Override
     protected void onDestroy() {
         seekBarBackgroundOpacity.setOnSeekBarChangeListener(null);
+        darkTextSwitch.setOnCheckedChangeListener(null);
         darkBackgroundSwitch.setOnCheckedChangeListener(null);
 
         super.onDestroy();
+    }
+
+    public void setWidgetStyle() {
+        setCalendarAppWidgetRootViewBackground();
+        setContentContainer();
+        setDateContainer();
+        setEvents();
     }
 
     private void setCalendarAppWidgetRootViewBackground() {
@@ -160,6 +194,48 @@ public class CalendarAppWidgetConfigureActivity extends Activity {
         calendarAppWidgetRootView.setBackground(backgroundShape);
     }
 
+    private void setContentContainer() {
+        LinearLayout contentContainer = calendarAppWidgetView.findViewById(R.id.contentContainer);
+        boolean large = widgetColumnSpan > 2;
+        int dp8 = ResourceHelper.getDP(8);
+        int dp12 = ResourceHelper.getDP(12);
+        int paddingLeftRight = large ? dp12 : dp8;
+        contentContainer.setPadding(paddingLeftRight, dp12, paddingLeftRight, 0);
+    }
+
+    private void setDateContainer() {
+        Calendar calendar = Calendar.getInstance();
+
+        SimpleDateFormat dayFormat = new SimpleDateFormat("EEEE", Locale.getDefault());
+        String day = dayFormat.format(calendar.getTime());
+        int date = calendar.get(Calendar.DAY_OF_MONTH);
+        SimpleDateFormat monthFormat = new SimpleDateFormat("MMMM", Locale.getDefault());
+        String month = monthFormat.format(calendar.getTime());
+
+        TextView lblDay = calendarAppWidgetView.findViewById(R.id.lblDay);
+        lblDay.setText(day);
+        lblDay.setTextColor(textColor);
+
+        TextView lblDate = calendarAppWidgetView.findViewById(R.id.lblDate);
+        lblDate.setText(String.valueOf(date));
+        lblDate.setTextColor(textColor);
+
+        TextView lblMonth = calendarAppWidgetView.findViewById(R.id.lblMonth);
+        lblMonth.setText(month);
+        lblMonth.setTextColor(textColor);
+
+        LinearLayout llDateContainer = calendarAppWidgetView.findViewById(R.id.dateContainer);
+        ((LinearLayout.LayoutParams) llDateContainer.getLayoutParams()).topMargin = ResourceHelper.getDP(8);
+        boolean large = widgetColumnSpan > 2;
+        int dp8 = ResourceHelper.getDP(8);
+        int dp12 = ResourceHelper.getDP(12);
+        ((LinearLayout.LayoutParams) llDateContainer.getLayoutParams()).setMarginEnd(large ? dp12 : dp8);
+    }
+
+    private void setEvents() {
+
+    }
+
     @ColorInt
     static int getBackgroundColor(boolean dark, int opacityPercentage) {
         if (dark) {
@@ -167,39 +243,5 @@ public class CalendarAppWidgetConfigureActivity extends Activity {
         } else {
             return Color.argb((int) (2.55 * opacityPercentage), 255, 255, 255);
         }
-    }
-
-    static void saveBackgroundOpacityPref(Context context, int appWidgetId, int backgroundOpacity) {
-        SharedPreferences.Editor prefs = context.getSharedPreferences(PREFS_NAME, 0).edit();
-        prefs.putInt(PREF_PREFIX_OPACITY_KEY + appWidgetId, backgroundOpacity);
-        prefs.apply();
-    }
-
-    static int loadBackgroundOpacityPref(Context context, int appWidgetId) {
-        SharedPreferences prefs = context.getSharedPreferences(PREFS_NAME, 0);
-        return prefs.getInt(PREF_PREFIX_OPACITY_KEY + appWidgetId, 100);
-    }
-
-    static void deleteBackgroundOpacityPref(Context context, int appWidgetId) {
-        SharedPreferences.Editor prefs = context.getSharedPreferences(PREFS_NAME, 0).edit();
-        prefs.remove(PREF_PREFIX_OPACITY_KEY + appWidgetId);
-        prefs.apply();
-    }
-
-    static void saveDarkBackgroundPref(Context context, int appWidgetId, boolean darkBackground) {
-        SharedPreferences.Editor prefs = context.getSharedPreferences(PREFS_NAME, 0).edit();
-        prefs.putBoolean(PREF_PREFIX_DARK_KEY + appWidgetId, darkBackground);
-        prefs.apply();
-    }
-
-    static boolean loadDarkBackgroundPref(Context context, int appWidgetId) {
-        SharedPreferences prefs = context.getSharedPreferences(PREFS_NAME, 0);
-        return prefs.getBoolean(PREF_PREFIX_DARK_KEY + appWidgetId, true);
-    }
-
-    static void deleteDarkBackgroundPref(Context context, int appWidgetId) {
-        SharedPreferences.Editor prefs = context.getSharedPreferences(PREFS_NAME, 0).edit();
-        prefs.remove(PREF_PREFIX_DARK_KEY + appWidgetId);
-        prefs.apply();
     }
 }

@@ -1,4 +1,5 @@
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
     android:id="@android:id/background"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
@@ -6,30 +7,68 @@
     android:padding="?attr/appWidgetPadding"
     android:theme="@style/Theme.AndroidCalendarWidget.AppWidgetContainer">
 
-    <FrameLayout
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_alignParentEnd="true"
-        android:layout_marginTop="8dp">
+    <LinearLayout
+        android:id="@+id/contentContainer"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="horizontal"
+        tools:ignore="UselessParent">
 
-        <TextView
+        <LinearLayout
+            android:id="@+id/dateContainer"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="TESTING" />
+            android:gravity="center_horizontal"
+            android:orientation="vertical">
 
-    </FrameLayout>
+            <TextView
+                android:id="@+id/lblDay"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/wednesday"
+                android:textColor="@color/black"
+                android:textSize="16sp" />
 
-    <TextView
-        android:id="@+id/appwidget_text"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_margin="8dp"
-        android:background="@drawable/app_widget_inner_view_background"
-        android:clipToOutline="true"
-        android:contentDescription="@string/appwidget_text"
-        android:padding="?attr/appWidgetPadding"
-        android:text="@string/appwidget_text"
-        android:textColor="?android:attr/textColorPrimary"
-        android:textSize="24sp"
-        android:textStyle="bold|italic" />
+            <TextView
+                android:id="@+id/lblDate"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="-15dp"
+                android:layout_marginBottom="-15dp"
+                android:text="@string/_16"
+                android:textColor="@color/black"
+                android:textSize="60sp"
+                android:textStyle="normal" />
+
+            <TextView
+                android:id="@+id/lblMonth"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/december"
+                android:textColor="@color/black"
+                android:textSize="16sp" />
+
+        </LinearLayout>
+
+        <ListView
+            android:id="@+id/eventsListView"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:clickable="false"
+            android:longClickable="false">
+
+        </ListView>
+
+        <TextView
+            android:id="@+id/noEvents"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:gravity="center"
+            android:text="@string/no_events"
+            android:textSize="18sp"
+            android:textStyle="bold|italic"
+            android:visibility="gone" />
+
+    </LinearLayout>
+
 </RelativeLayout>

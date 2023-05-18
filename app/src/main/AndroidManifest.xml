@@ -4,7 +4,10 @@
 
     <uses-permission android:name="android.permission.GET_ACCOUNTS" />
     <uses-permission android:name="android.permission.INTERNET" />
-    <uses-permission android:name="android.permission.QUERY_ALL_PACKAGES" android:maxSdkVersion="33" tools:ignore="QueryAllPackagesPermission" />
+    <uses-permission
+        android:name="android.permission.QUERY_ALL_PACKAGES"
+        android:maxSdkVersion="33"
+        tools:ignore="QueryAllPackagesPermission" />
     <uses-permission android:name="android.permission.READ_CALENDAR" />
     <uses-permission android:name="android.permission.WRITE_CALENDAR" />
 
@@ -29,6 +32,14 @@
             </intent-filter>
         </activity>
 
+        <activity
+            android:name=".CalendarAppWidgetConfigureActivity"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_CONFIGURE" />
+            </intent-filter>
+        </activity>
+
         <receiver
             android:name=".CalendarAppWidget"
             android:exported="false">
@@ -41,20 +52,22 @@
                 android:resource="@xml/calendar_app_widget_info" />
         </receiver>
 
-        <activity
-            android:name=".CalendarAppWidgetConfigureActivity"
+        <receiver
+            android:name=".receivers.CalendarChangeReceiver"
+            android:enabled="true"
             android:exported="true">
             <intent-filter>
-                <action android:name="android.appwidget.action.APPWIDGET_CONFIGURE" />
+                <action android:name="android.intent.action.PROVIDER_CHANGED" />
+
+                <data android:scheme="content" />
+                <data android:host="com.android.calendar" />
             </intent-filter>
-        </activity>
+        </receiver>
+
+        <service
+            android:name=".services.WidgetEventRemoteViewsService"
+            android:permission="android.permission.BIND_REMOTEVIEWS" />
 
     </application>
-
-    <queries>
-        <intent>
-            <action android:name="android.service.wallpaper.WallpaperService"/>
-        </intent>
-    </queries>
 
 </manifest>
