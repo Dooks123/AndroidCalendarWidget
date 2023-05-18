@@ -1,17 +1,22 @@
 package com.dooks123.androidcalendarwidget;
 
+import android.app.PendingIntent;
 import android.appwidget.AppWidgetManager;
 import android.appwidget.AppWidgetProvider;
 import android.content.Context;
 import android.content.Intent;
+import android.net.Uri;
 import android.os.Bundle;
 import android.util.TypedValue;
+import android.widget.ListView;
 import android.widget.RemoteViews;
+import android.widget.Toast;
 
 import androidx.annotation.ColorInt;
 
 import com.dooks123.androidcalendarwidget.helpers.ResourceHelper;
 import com.dooks123.androidcalendarwidget.prefs.CalendarAppSharedPreferences;
+import com.dooks123.androidcalendarwidget.queries.CalendarQuery;
 import com.dooks123.androidcalendarwidget.services.WidgetEventRemoteViewsService;
 
 import java.text.SimpleDateFormat;
@@ -44,6 +49,10 @@ public class CalendarAppWidget extends AppWidgetProvider {
         setContentContainer(views, widgetColumnSpan);
         setDateContainer(views, textColor, widgetColumnSpan);
         setEventsListView(context, views, appWidgetId, textColor);
+
+        Intent openCalendarIntent = new Intent(Intent.ACTION_VIEW, CalendarQuery.getCalendarContractUri());
+        PendingIntent openCalendarPendingIntent = PendingIntent.getActivity(context, 0, openCalendarIntent, PendingIntent.FLAG_IMMUTABLE);
+        views.setOnClickPendingIntent(android.R.id.background, openCalendarPendingIntent);
 
         // Instruct the widget manager to update the widget
         appWidgetManager.notifyAppWidgetViewDataChanged(appWidgetId, R.id.eventsListView);
@@ -93,8 +102,6 @@ public class CalendarAppWidget extends AppWidgetProvider {
 
     @Override
     public void onReceive(Context context, Intent intent) {
-        super.onReceive(context, intent);
-
         int appWidgetId = intent.getIntExtra("appWidgetId", AppWidgetManager.INVALID_APPWIDGET_ID);
         if (appWidgetId != AppWidgetManager.INVALID_APPWIDGET_ID) {
             Bundle options = intent.getBundleExtra("appWidgetOptions");
@@ -106,6 +113,8 @@ public class CalendarAppWidget extends AppWidgetProvider {
                 }
             }
         }
+
+        super.onReceive(context, intent);
     }
 
     @Override

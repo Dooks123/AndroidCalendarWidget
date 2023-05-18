@@ -15,8 +15,16 @@ import java.util.List;
 
 public class CalendarQuery {
 
+    public static Uri getCalendarContractUri() {
+        return Uri.parse(CalendarContract.CONTENT_URI.toString());
+    }
+
+    public static Uri getCalendarEventsContractUri() {
+        return Uri.parse(CalendarContract.Events.CONTENT_URI.toString());
+    }
+
     public static List<CalendarEvent> getCalendarEventsForToday() {
-        Uri contentUri = Uri.parse(CalendarContract.Events.CONTENT_URI.toString());
+        Uri contentUri = getCalendarEventsContractUri();
         ContentResolver contentResolver = MainApplication.getContext().getContentResolver();
 
         Calendar startTime = Calendar.getInstance();

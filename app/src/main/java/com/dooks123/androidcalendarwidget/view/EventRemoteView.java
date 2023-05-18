@@ -1,7 +1,6 @@
 package com.dooks123.androidcalendarwidget.view;
 
 import android.graphics.Color;
-import android.util.Log;
 import android.widget.RemoteViews;
 
 import androidx.annotation.ColorInt;
@@ -21,11 +20,11 @@ public class EventRemoteView extends RemoteViews {
     /**
      * Create a new EventRemoteView.
      *
-     * @param packageName Name of the package that contains the {@code R.layout.sample_event_remote_view} layout resource
+     * @param packageName Name of the package that contains the {@code R.layout.event_remote_view} layout resource
      * @param event       A {@link CalendarEvent} instance
      */
     public EventRemoteView(String packageName, CalendarEvent event, boolean darkText) {
-        super(packageName, R.layout.sample_event_remote_view);
+        super(packageName, R.layout.event_remote_view);
 
         this.event = event;
         this.darkText = darkText;
