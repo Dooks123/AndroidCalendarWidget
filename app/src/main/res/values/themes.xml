@@ -12,14 +12,4 @@
         <item name="android:windowTranslucentStatus">true</item>
     </style>
 
-    <style name="Theme.AndroidCalendarWidget.AppWidgetContainerParent" parent="@android:style/Theme.DeviceDefault">
-        <item name="appWidgetRadius">16dp</item>
-        <item name="appWidgetInnerRadius">8dp</item>
-    </style>
-
-    <style name="Theme.AndroidCalendarWidget.AppWidgetContainer" parent="Theme.AndroidCalendarWidget.AppWidgetContainerParent">
-        <!-- Apply padding to avoid the content of the widget colliding with the rounded corners -->
-        <item name="appWidgetPadding">0dp</item>
-    </style>
-
 </resources>

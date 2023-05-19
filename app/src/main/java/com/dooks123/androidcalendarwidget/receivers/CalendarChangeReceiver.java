@@ -18,9 +18,10 @@ public class CalendarChangeReceiver extends BroadcastReceiver {
 
         for (int appWidgetId : appWidgetIds) {
             Bundle options = appWidgetManager.getAppWidgetOptions(appWidgetId);
+            int widgetRowSpan = (int) options.get("semAppWidgetRowSpan");
             int widgetColumnSpan = (int) options.get("semAppWidgetColumnSpan");
 
-            CalendarAppWidget.updateAppWidget(context, appWidgetManager, appWidgetId, widgetColumnSpan);
+            CalendarAppWidget.updateAppWidget(context, appWidgetManager, appWidgetId, widgetRowSpan, widgetColumnSpan);
         }
     }
 }

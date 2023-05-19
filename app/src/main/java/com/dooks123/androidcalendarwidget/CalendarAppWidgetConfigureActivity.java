@@ -10,6 +10,7 @@ import android.os.Bundle;
 import android.view.View;
 import android.widget.CompoundButton;
 import android.widget.LinearLayout;
+import android.widget.ListView;
 import android.widget.SeekBar;
 import android.widget.TextView;
 
@@ -17,16 +18,14 @@ import androidx.annotation.ColorInt;
 import androidx.appcompat.widget.AppCompatSeekBar;
 import androidx.appcompat.widget.SwitchCompat;
 
+import com.dooks123.androidcalendarwidget.adapters.EventListAdapter;
 import com.dooks123.androidcalendarwidget.databinding.CalendarAppWidgetConfigureBinding;
 import com.dooks123.androidcalendarwidget.helpers.ResourceHelper;
 import com.dooks123.androidcalendarwidget.helpers.WindowHelper;
-import com.dooks123.androidcalendarwidget.object.CalendarEvent;
 import com.dooks123.androidcalendarwidget.prefs.CalendarAppSharedPreferences;
-import com.dooks123.androidcalendarwidget.queries.CalendarQuery;
 
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
-import java.util.List;
 import java.util.Locale;
 
 public class CalendarAppWidgetConfigureActivity extends Activity {
@@ -36,6 +35,7 @@ public class CalendarAppWidgetConfigureActivity extends Activity {
     boolean darkBackground = true;
     boolean darkText = false;
 
+    int widgetRowSpan = 1;
     int widgetColumnSpan = 2;
 
     int textColor = 0xff000000;
@@ -86,7 +86,7 @@ public class CalendarAppWidgetConfigureActivity extends Activity {
         prefs.setBoolean(CalendarAppSharedPreferences.KEY_BACKGROUND_DARK, mAppWidgetId, darkBackground);
         prefs.setBoolean(CalendarAppSharedPreferences.KEY_TEXT_DARK, mAppWidgetId, darkText);
 
-        CalendarAppWidget.updateAppWidget(context, appWidgetManager, mAppWidgetId, widgetColumnSpan);
+        CalendarAppWidget.updateAppWidget(context, appWidgetManager, mAppWidgetId, widgetRowSpan, widgetColumnSpan);
 
         // Make sure we pass back the original appWidgetId
         Intent resultValue = new Intent();
@@ -140,6 +140,7 @@ public class CalendarAppWidgetConfigureActivity extends Activity {
         appWidgetManager = AppWidgetManager.getInstance(this);
         Bundle options = appWidgetManager.getAppWidgetOptions(mAppWidgetId);
 
+        widgetRowSpan = (int) options.get("semAppWidgetRowSpan");
         widgetColumnSpan = (int) options.get("semAppWidgetColumnSpan");
 
         calendarAppWidgetRootView = calendarAppWidgetView.findViewById(android.R.id.background);
@@ -181,26 +182,23 @@ public class CalendarAppWidgetConfigureActivity extends Activity {
     }
 
     public void setWidgetStyle() {
-        setCalendarAppWidgetRootViewBackground();
-        setContentContainer();
+        setContainer();
         setDateContainer();
         setEvents();
     }
 
-    private void setCalendarAppWidgetRootViewBackground() {
+    private void setContainer() {
+        boolean large = widgetColumnSpan > 2;
+        int dp8 = ResourceHelper.getDP(8);
+        int dp20 = ResourceHelper.getDP(20);
+        int paddingLeftRight = large ? dp20 : dp8;
+
         int backgroundColor = getBackgroundColor(darkBackground, seekBarOpacityValue);
         PaintDrawable backgroundShape = new PaintDrawable(backgroundColor);
         backgroundShape.setCornerRadius(getResources().getDimension(android.R.dimen.system_app_widget_background_radius));
-        calendarAppWidgetRootView.setBackground(backgroundShape);
-    }
 
-    private void setContentContainer() {
-        LinearLayout contentContainer = calendarAppWidgetView.findViewById(R.id.contentContainer);
-        boolean large = widgetColumnSpan > 2;
-        int dp8 = ResourceHelper.getDP(8);
-        int dp12 = ResourceHelper.getDP(12);
-        int paddingLeftRight = large ? dp12 : dp8;
-        contentContainer.setPadding(paddingLeftRight, dp12, paddingLeftRight, 0);
+        calendarAppWidgetRootView.setPadding(paddingLeftRight, 0, paddingLeftRight, 0);
+        calendarAppWidgetRootView.setBackground(backgroundShape);
     }
 
     private void setDateContainer() {
@@ -225,15 +223,38 @@ public class CalendarAppWidgetConfigureActivity extends Activity {
         lblMonth.setTextColor(textColor);
 
         LinearLayout llDateContainer = calendarAppWidgetView.findViewById(R.id.dateContainer);
-        ((LinearLayout.LayoutParams) llDateContainer.getLayoutParams()).topMargin = ResourceHelper.getDP(8);
+
         boolean large = widgetColumnSpan > 2;
         int dp8 = ResourceHelper.getDP(8);
         int dp12 = ResourceHelper.getDP(12);
-        ((LinearLayout.LayoutParams) llDateContainer.getLayoutParams()).setMarginEnd(large ? dp12 : dp8);
+
+        LinearLayout.LayoutParams dateContainerLayoutParams = (LinearLayout.LayoutParams) llDateContainer.getLayoutParams();
+        dateContainerLayoutParams.setMarginEnd(large ? dp12 : dp8);
+
+        if (widgetRowSpan > 1) {
+            dateContainerLayoutParams.height = ResourceHelper.getDP(130);
+        } else {
+            dateContainerLayoutParams.height = LinearLayout.LayoutParams.MATCH_PARENT;
+        }
     }
 
-    private void setEvents() {
+    private EventListAdapter eventsAdapter;
 
+    private void setEvents() {
+        ListView eventsListView = calendarAppWidgetView.findViewById(R.id.eventsListView);
+        TextView noEvents = calendarAppWidgetView.findViewById(R.id.noEvents);
+        noEvents.setTextColor(textColor);
+
+        eventsListView.setEmptyView(noEvents);
+
+        if (eventsAdapter == null) {
+            eventsAdapter = new EventListAdapter(this);
+            eventsAdapter.setItems(textColor);
+
+            eventsListView.setAdapter(eventsAdapter);
+        } else {
+            eventsAdapter.setItems(textColor);
+        }
     }
 
     @ColorInt

@@ -1,72 +1,77 @@
-<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:tools="http://schemas.android.com/tools"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@android:id/background"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@drawable/app_widget_background"
-    android:padding="?attr/appWidgetPadding"
-    android:theme="@style/Theme.AndroidCalendarWidget.AppWidgetContainer">
+    android:orientation="horizontal">
 
     <LinearLayout
-        android:id="@+id/contentContainer"
-        android:layout_width="match_parent"
+        android:id="@+id/dateContainer"
+        android:layout_width="wrap_content"
         android:layout_height="match_parent"
-        android:orientation="horizontal"
-        tools:ignore="UselessParent">
-
-        <LinearLayout
-            android:id="@+id/dateContainer"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:gravity="center_horizontal"
-            android:orientation="vertical">
-
-            <TextView
-                android:id="@+id/lblDay"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="@string/wednesday"
-                android:textColor="@color/black"
-                android:textSize="16sp" />
-
-            <TextView
-                android:id="@+id/lblDate"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="-15dp"
-                android:layout_marginBottom="-15dp"
-                android:text="@string/_16"
-                android:textColor="@color/black"
-                android:textSize="60sp"
-                android:textStyle="normal" />
-
-            <TextView
-                android:id="@+id/lblMonth"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="@string/december"
-                android:textColor="@color/black"
-                android:textSize="16sp" />
-
-        </LinearLayout>
-
-        <ListView
-            android:id="@+id/eventsListView"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent">
-
-        </ListView>
+        android:layout_marginTop="8dp"
+        android:layout_marginBottom="8dp"
+        android:gravity="center_horizontal"
+        android:orientation="vertical"
+        android:weightSum="6">
 
         <TextView
-            android:id="@+id/noEvents"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
+            android:id="@+id/lblDay"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
             android:gravity="center"
-            android:text="@string/no_events"
-            android:textSize="18sp"
-            android:textStyle="bold|italic"
-            android:visibility="gone" />
+            android:text="@string/wednesday"
+            android:textColor="@color/black"
+            android:textFontWeight="500"
+            android:textSize="16sp" />
+
+        <TextView
+            android:id="@+id/lblDate"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="-18dp"
+            android:layout_marginBottom="-18dp"
+            android:layout_weight="4"
+            android:gravity="center"
+            android:letterSpacing="-0.1"
+            android:text="@string/_16"
+            android:textColor="@color/black"
+            android:textFontWeight="200"
+            android:textSize="60sp"
+            android:textStyle="normal" />
+
+        <TextView
+            android:id="@+id/lblMonth"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:gravity="center"
+            android:text="@string/december"
+            android:textColor="@color/black"
+            android:textFontWeight="500"
+            android:textSize="16sp" />
 
     </LinearLayout>
 
-</RelativeLayout>
+    <ListView
+        android:id="@+id/eventsListView"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_marginTop="8dp"
+        android:layout_marginBottom="8dp"
+        android:divider="@null">
+
+    </ListView>
+
+    <TextView
+        android:id="@+id/noEvents"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:gravity="center"
+        android:text="@string/no_events"
+        android:textSize="18sp"
+        android:textStyle="bold|italic"
+        android:visibility="gone" />
+
+</LinearLayout>

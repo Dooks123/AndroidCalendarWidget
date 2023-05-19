@@ -5,12 +5,11 @@ import android.appwidget.AppWidgetManager;
 import android.appwidget.AppWidgetProvider;
 import android.content.Context;
 import android.content.Intent;
-import android.net.Uri;
 import android.os.Bundle;
 import android.util.TypedValue;
-import android.widget.ListView;
+import android.widget.LinearLayout;
 import android.widget.RemoteViews;
-import android.widget.Toast;
+import android.widget.TextView;
 
 import androidx.annotation.ColorInt;
 
@@ -33,6 +32,7 @@ public class CalendarAppWidget extends AppWidgetProvider {
             Context context,
             AppWidgetManager appWidgetManager,
             int appWidgetId,
+            int widgetRowSpan,
             int widgetColumnSpan
     ) {
         CalendarAppSharedPreferences prefs = CalendarAppSharedPreferences.getInstance();
@@ -44,10 +44,9 @@ public class CalendarAppWidget extends AppWidgetProvider {
         int textColor = darkText ? 0xff000000 : 0xffffffff;
 
         RemoteViews views = new RemoteViews(context.getPackageName(), R.layout.calendar_app_widget);
-        views.setInt(android.R.id.background, "setBackgroundColor", backgroundColor);
 
-        setContentContainer(views, widgetColumnSpan);
-        setDateContainer(views, textColor, widgetColumnSpan);
+        setContainer(views, backgroundColor, widgetColumnSpan);
+        setDateContainer(views, textColor, widgetRowSpan, widgetColumnSpan);
         setEventsListView(context, views, appWidgetId, textColor);
 
         Intent openCalendarIntent = new Intent(Intent.ACTION_VIEW, CalendarQuery.getCalendarContractUri());
@@ -64,17 +63,19 @@ public class CalendarAppWidget extends AppWidgetProvider {
         // There may be multiple widgets active, so update all of them
         for (int appWidgetId : appWidgetIds) {
             Bundle options = appWidgetManager.getAppWidgetOptions(appWidgetId);
+            int widgetRowSpan = (int) options.get("semAppWidgetRowSpan");
             int widgetColumnSpan = (int) options.get("semAppWidgetColumnSpan");
 
-            updateAppWidget(context, appWidgetManager, appWidgetId, widgetColumnSpan);
+            updateAppWidget(context, appWidgetManager, appWidgetId, widgetRowSpan, widgetColumnSpan);
         }
     }
 
     @Override
     public void onAppWidgetOptionsChanged(Context context, AppWidgetManager appWidgetManager, int appWidgetId, Bundle newOptions) {
+        int widgetRowSpan = (int) newOptions.get("semAppWidgetRowSpan");
         int widgetColumnSpan = (int) newOptions.get("semAppWidgetColumnSpan");
 
-        updateAppWidget(context, appWidgetManager, appWidgetId, widgetColumnSpan);
+        updateAppWidget(context, appWidgetManager, appWidgetId, widgetRowSpan, widgetColumnSpan);
 
         super.onAppWidgetOptionsChanged(context, appWidgetManager, appWidgetId, newOptions);
     }
@@ -106,10 +107,11 @@ public class CalendarAppWidget extends AppWidgetProvider {
         if (appWidgetId != AppWidgetManager.INVALID_APPWIDGET_ID) {
             Bundle options = intent.getBundleExtra("appWidgetOptions");
             if (options != null) {
+                int widgetRowSpan = options.getInt("semAppWidgetColumnSpan", 0);
                 int widgetColumnSpan = options.getInt("semAppWidgetColumnSpan", 0);
-                if (widgetColumnSpan > 0) {
+                if (widgetRowSpan > 0 && widgetColumnSpan > 0) {
                     AppWidgetManager appWidgetManager = AppWidgetManager.getInstance(context);
-                    updateAppWidget(context, appWidgetManager, appWidgetId, widgetColumnSpan);
+                    updateAppWidget(context, appWidgetManager, appWidgetId, widgetRowSpan, widgetColumnSpan);
                 }
             }
         }
@@ -122,21 +124,24 @@ public class CalendarAppWidget extends AppWidgetProvider {
         super.onRestored(context, oldWidgetIds, newWidgetIds);
     }
 
-    private static void setContentContainer(
+    private static void setContainer(
             RemoteViews views,
+            @ColorInt int backgroundColor,
             int widgetColumnSpan
     ) {
         boolean large = widgetColumnSpan > 2;
         int dp8 = ResourceHelper.getDP(8);
-        int dp12 = ResourceHelper.getDP(12);
-        int paddingLeftRight = large ? dp12 : dp8;
+        int dp20 = ResourceHelper.getDP(20);
+        int paddingLeftRight = large ? dp20 : dp8;
 
-        views.setViewPadding(R.id.contentContainer, paddingLeftRight, dp12, paddingLeftRight, 0);
+        views.setInt(android.R.id.background, "setBackgroundColor", backgroundColor);
+        views.setViewPadding(android.R.id.background, paddingLeftRight, 0, paddingLeftRight, 0);
     }
 
     private static void setDateContainer(
             RemoteViews views,
             @ColorInt int textColor,
+            int widgetRowSpan,
             int widgetColumnSpan
     ) {
         Calendar calendar = Calendar.getInstance();
@@ -156,11 +161,16 @@ public class CalendarAppWidget extends AppWidgetProvider {
         views.setTextViewText(R.id.lblMonth, month);
         views.setTextColor(R.id.lblMonth, textColor);
 
-        views.setViewLayoutMargin(R.id.dateContainer, RemoteViews.MARGIN_TOP, ResourceHelper.getDP(8), TypedValue.COMPLEX_UNIT_PX);
         boolean large = widgetColumnSpan > 2;
         int dp8 = ResourceHelper.getDP(8);
-        int dp12 = ResourceHelper.getDP(12);
-        views.setViewLayoutMargin(R.id.dateContainer, RemoteViews.MARGIN_END, large ? dp12 : dp8, TypedValue.COMPLEX_UNIT_PX);
+        int dp16 = ResourceHelper.getDP(16);
+        views.setViewLayoutMargin(R.id.dateContainer, RemoteViews.MARGIN_END, large ? dp16 : dp8, TypedValue.COMPLEX_UNIT_PX);
+
+        if (widgetRowSpan > 1) {
+            views.setViewLayoutHeight(R.id.dateContainer, 130, TypedValue.COMPLEX_UNIT_DIP);
+        } else {
+            views.setViewLayoutHeight(R.id.dateContainer, LinearLayout.LayoutParams.MATCH_PARENT, TypedValue.COMPLEX_UNIT_PX);
+        }
     }
 
     private static void setEventsListView(Context context, RemoteViews views, int appWidgetId, @ColorInt int textColor) {
