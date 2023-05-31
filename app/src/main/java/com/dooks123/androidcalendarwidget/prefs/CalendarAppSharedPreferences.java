@@ -4,12 +4,15 @@ import android.content.SharedPreferences;
 
 import com.dooks123.androidcalendarwidget.MainApplication;
 
+import java.util.Date;
+
 public class CalendarAppSharedPreferences {
     private static final String PREFS_NAME = "com.dooks123.androidcalendarwidget.CalendarAppWidget";
 
     public static final String KEY_BACKGROUND_OPACITY = "background_opacity_";
     public static final String KEY_BACKGROUND_DARK = "background_dark_";
     public static final String KEY_TEXT_DARK = "text_dark_";
+    public static final String KEY_LAST_REFRESH_DATE = "last_refresh_date_";
 
     private static CalendarAppSharedPreferences instance;
 
@@ -57,6 +60,20 @@ public class CalendarAppSharedPreferences {
 
     public boolean getBoolean(String key, int appWidgetId, boolean defaultValue) {
         return getPreferences().getBoolean(key + appWidgetId, defaultValue);
+    }
+
+    public void setDate(String key, int appWidgetId, Date date) {
+        SharedPreferences.Editor prefs = getEditor();
+        prefs.putLong(key + appWidgetId, date.getTime());
+        prefs.apply();
+    }
+
+    public Date getDate(String key, int appWidgetId) {
+        return getDate(key, appWidgetId, new Date(0L));
+    }
+
+    public Date getDate(String key, int appWidgetId, Date defaultValue) {
+        return new Date(getPreferences().getLong(key + appWidgetId, defaultValue.getTime()));
     }
 
     public void remove(String key, int appWidgetId) {

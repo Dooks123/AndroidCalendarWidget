@@ -9,6 +9,7 @@ import android.graphics.drawable.PaintDrawable;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.CompoundButton;
+import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.SeekBar;
@@ -26,6 +27,7 @@ import com.dooks123.androidcalendarwidget.prefs.CalendarAppSharedPreferences;
 
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
+import java.util.Date;
 import java.util.Locale;
 
 public class CalendarAppWidgetConfigureActivity extends Activity {
@@ -39,6 +41,8 @@ public class CalendarAppWidgetConfigureActivity extends Activity {
     int widgetColumnSpan = 2;
 
     int textColor = 0xff000000;
+
+    Date lastRefreshed;
 
     AppWidgetManager appWidgetManager;
 
@@ -128,6 +132,7 @@ public class CalendarAppWidgetConfigureActivity extends Activity {
         darkBackground = prefs.getBoolean(CalendarAppSharedPreferences.KEY_BACKGROUND_DARK, mAppWidgetId, darkBackground);
         darkText = prefs.getBoolean(CalendarAppSharedPreferences.KEY_TEXT_DARK, mAppWidgetId, darkText);
         textColor = darkText ? 0xff000000 : 0xffffffff;
+        lastRefreshed = prefs.getDate(CalendarAppSharedPreferences.KEY_LAST_REFRESH_DATE, mAppWidgetId);
 
         CalendarAppWidgetConfigureBinding binding = CalendarAppWidgetConfigureBinding.inflate(getLayoutInflater());
 
@@ -185,6 +190,7 @@ public class CalendarAppWidgetConfigureActivity extends Activity {
         setContainer();
         setDateContainer();
         setEvents();
+        setRefresh();
     }
 
     private void setContainer() {
@@ -255,6 +261,18 @@ public class CalendarAppWidgetConfigureActivity extends Activity {
         } else {
             eventsAdapter.setItems(textColor);
         }
+    }
+
+    private void setRefresh() {
+        ImageView refreshImage = calendarAppWidgetView.findViewById(R.id.refreshImage);
+        refreshImage.setColorFilter(textColor);
+
+        SimpleDateFormat lastRefreshedDateFormat = new SimpleDateFormat("HH:mm", Locale.getDefault());
+        String lastRefreshedDate = lastRefreshedDateFormat.format(lastRefreshed);
+
+        TextView lastRefreshDate = calendarAppWidgetView.findViewById(R.id.lastRefreshDate);
+        lastRefreshDate.setText(lastRefreshedDate);
+        lastRefreshDate.setTextColor(textColor);
     }
 
     @ColorInt

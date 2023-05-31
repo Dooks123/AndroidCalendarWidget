@@ -9,9 +9,12 @@ import android.util.Log;
 import com.dooks123.androidcalendarwidget.MainApplication;
 import com.dooks123.androidcalendarwidget.object.CalendarEvent;
 
+import java.sql.Time;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.List;
+import java.util.Locale;
+import java.util.TimeZone;
 
 public class CalendarQuery {
 
@@ -27,18 +30,35 @@ public class CalendarQuery {
         Uri contentUri = getCalendarEventsContractUri();
         ContentResolver contentResolver = MainApplication.getContext().getContentResolver();
 
-        Calendar startTime = Calendar.getInstance();
+        TimeZone utcTimeZone = TimeZone.getTimeZone("UTC");
 
-        startTime.set(Calendar.HOUR_OF_DAY, 0);
-        startTime.set(Calendar.MINUTE, 0);
-        startTime.set(Calendar.SECOND, 0);
+        Calendar localStartTime = Calendar.getInstance();
+        localStartTime.set(Calendar.HOUR_OF_DAY, 0);
+        localStartTime.set(Calendar.MINUTE, 0);
+        localStartTime.set(Calendar.SECOND, 0);
 
-        Calendar endTime = Calendar.getInstance();
-        endTime.add(Calendar.DATE, 1);
+        Calendar utcStartTime = Calendar.getInstance(utcTimeZone);
+        utcStartTime.set(Calendar.HOUR_OF_DAY, 0);
+        utcStartTime.set(Calendar.MINUTE, 0);
+        utcStartTime.set(Calendar.SECOND, 0);
 
-        String selection = CalendarContract.Events.DTSTART + " >= " + startTime.getTimeInMillis()
-                + " AND " + CalendarContract.Events.DTSTART + " <= " + endTime.getTimeInMillis()
-                + " AND " + CalendarContract.Events.DELETED + " != 1";
+        Calendar localEndTime = Calendar.getInstance();
+        localEndTime.add(Calendar.DATE, 1);
+
+        Calendar utcEndTime = Calendar.getInstance(utcTimeZone);
+        utcEndTime.add(Calendar.DATE, 1);
+
+        String localSelection = "(" + CalendarContract.Events.DTSTART + " >= " + localStartTime.getTimeInMillis()
+                + " AND " + CalendarContract.Events.DTEND + " <= " + localEndTime.getTimeInMillis()
+                + " AND " + CalendarContract.Events.DELETED + " != 1"
+                + " AND " + CalendarContract.Events.EVENT_TIMEZONE + " != 'UTC')";
+
+        String utcSelection = "(" + CalendarContract.Events.DTSTART + " >= " + utcStartTime.getTimeInMillis()
+                + " AND " + CalendarContract.Events.DTEND + " <= " + utcEndTime.getTimeInMillis()
+                + " AND " + CalendarContract.Events.DELETED + " != 1"
+                + " AND " + CalendarContract.Events.EVENT_TIMEZONE + " = 'UTC')";
+
+        String selection = localSelection + " OR " + utcSelection;
 
         List<CalendarEvent> events = new ArrayList<>();
 

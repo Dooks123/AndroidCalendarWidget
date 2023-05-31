@@ -18,6 +18,10 @@ public class WidgetEventRemoteViewsFactory implements RemoteViewsService.RemoteV
     public WidgetEventRemoteViewsFactory(int appWidgetId) {
         this.appWidgetId = appWidgetId;
 
+        setEventList();
+    }
+
+    private void setEventList() {
         eventList = CalendarQuery.getCalendarEventsForToday();
     }
 
@@ -27,7 +31,7 @@ public class WidgetEventRemoteViewsFactory implements RemoteViewsService.RemoteV
 
     @Override
     public void onDataSetChanged() {
-        eventList = CalendarQuery.getCalendarEventsForToday();
+        setEventList();
     }
 
     @Override

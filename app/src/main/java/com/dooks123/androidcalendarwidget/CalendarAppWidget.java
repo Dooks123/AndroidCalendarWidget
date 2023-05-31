@@ -6,8 +6,12 @@ import android.appwidget.AppWidgetProvider;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
+import android.util.Log;
 import android.util.TypedValue;
+import android.view.View;
+import android.widget.ImageView;
 import android.widget.LinearLayout;
+import android.widget.ProgressBar;
 import android.widget.RemoteViews;
 import android.widget.TextView;
 
@@ -20,7 +24,10 @@ import com.dooks123.androidcalendarwidget.services.WidgetEventRemoteViewsService
 
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
+import java.util.Date;
 import java.util.Locale;
+import java.util.Timer;
+import java.util.TimerTask;
 
 /**
  * Implementation of App Widget functionality.
@@ -37,6 +44,9 @@ public class CalendarAppWidget extends AppWidgetProvider {
     ) {
         CalendarAppSharedPreferences prefs = CalendarAppSharedPreferences.getInstance();
 
+        Date lastRefreshed = new Date();
+        prefs.setDate(CalendarAppSharedPreferences.KEY_LAST_REFRESH_DATE, appWidgetId, lastRefreshed);
+
         int backgroundOpacity = prefs.getInt(CalendarAppSharedPreferences.KEY_BACKGROUND_OPACITY, appWidgetId, 100);
         boolean darkBackground = prefs.getBoolean(CalendarAppSharedPreferences.KEY_BACKGROUND_DARK, appWidgetId, true);
         int backgroundColor = CalendarAppWidgetConfigureActivity.getBackgroundColor(darkBackground, backgroundOpacity);
@@ -48,14 +58,51 @@ public class CalendarAppWidget extends AppWidgetProvider {
         setContainer(views, backgroundColor, widgetColumnSpan);
         setDateContainer(views, textColor, widgetRowSpan, widgetColumnSpan);
         setEventsListView(context, views, appWidgetId, textColor);
+        setRefreshView(context, views, appWidgetId, darkText, textColor, lastRefreshed);
 
         Intent openCalendarIntent = new Intent(Intent.ACTION_VIEW, CalendarQuery.getCalendarContractUri());
         PendingIntent openCalendarPendingIntent = PendingIntent.getActivity(context, 0, openCalendarIntent, PendingIntent.FLAG_IMMUTABLE);
         views.setOnClickPendingIntent(android.R.id.background, openCalendarPendingIntent);
 
+        views.setViewVisibility(R.id.refreshImage, View.VISIBLE);
+        views.setViewVisibility(R.id.refreshProgressBarLight, View.GONE);
+        views.setViewVisibility(R.id.refreshProgressBarDark, View.GONE);
+
         // Instruct the widget manager to update the widget
         appWidgetManager.notifyAppWidgetViewDataChanged(appWidgetId, R.id.eventsListView);
         appWidgetManager.updateAppWidget(appWidgetId, views);
+    }
+
+    public static void updateAppWidgetRefreshing(final Context context, final int appWidgetId) {
+        CalendarAppSharedPreferences prefs = CalendarAppSharedPreferences.getInstance();
+        boolean darkText = prefs.getBoolean(CalendarAppSharedPreferences.KEY_TEXT_DARK, appWidgetId, false);
+
+        RemoteViews views = new RemoteViews(context.getPackageName(), R.layout.calendar_app_widget);
+
+        views.setViewVisibility(R.id.refreshImage, View.GONE);
+        views.setViewVisibility(R.id.refreshProgressBarLight, View.GONE);
+        views.setViewVisibility(R.id.refreshProgressBarDark, View.GONE);
+
+        if (darkText) {
+            views.setViewVisibility(R.id.refreshProgressBarDark, View.VISIBLE);
+        } else {
+            views.setViewVisibility(R.id.refreshProgressBarLight, View.VISIBLE);
+        }
+
+        final AppWidgetManager appWidgetManager = AppWidgetManager.getInstance(context);
+
+        appWidgetManager.partiallyUpdateAppWidget(appWidgetId, views);
+
+        Bundle options = appWidgetManager.getAppWidgetOptions(appWidgetId);
+        final int widgetRowSpan = options.getInt("semAppWidgetRowSpan", 0);
+        final int widgetColumnSpan = options.getInt("semAppWidgetColumnSpan", 0);
+
+        new Timer().schedule(new TimerTask() {
+            @Override
+            public void run() {
+                updateAppWidget(context, appWidgetManager, appWidgetId, widgetRowSpan, widgetColumnSpan);
+            }
+        }, 800);
     }
 
     @Override
@@ -63,8 +110,8 @@ public class CalendarAppWidget extends AppWidgetProvider {
         // There may be multiple widgets active, so update all of them
         for (int appWidgetId : appWidgetIds) {
             Bundle options = appWidgetManager.getAppWidgetOptions(appWidgetId);
-            int widgetRowSpan = (int) options.get("semAppWidgetRowSpan");
-            int widgetColumnSpan = (int) options.get("semAppWidgetColumnSpan");
+            int widgetRowSpan = options.getInt("semAppWidgetRowSpan", 0);
+            int widgetColumnSpan = options.getInt("semAppWidgetColumnSpan", 0);
 
             updateAppWidget(context, appWidgetManager, appWidgetId, widgetRowSpan, widgetColumnSpan);
         }
@@ -103,15 +150,20 @@ public class CalendarAppWidget extends AppWidgetProvider {
 
     @Override
     public void onReceive(Context context, Intent intent) {
-        int appWidgetId = intent.getIntExtra("appWidgetId", AppWidgetManager.INVALID_APPWIDGET_ID);
-        if (appWidgetId != AppWidgetManager.INVALID_APPWIDGET_ID) {
-            Bundle options = intent.getBundleExtra("appWidgetOptions");
-            if (options != null) {
-                int widgetRowSpan = options.getInt("semAppWidgetColumnSpan", 0);
-                int widgetColumnSpan = options.getInt("semAppWidgetColumnSpan", 0);
-                if (widgetRowSpan > 0 && widgetColumnSpan > 0) {
-                    AppWidgetManager appWidgetManager = AppWidgetManager.getInstance(context);
-                    updateAppWidget(context, appWidgetManager, appWidgetId, widgetRowSpan, widgetColumnSpan);
+        if (intent.getAction().equals("ACTION_REFRESH")) {
+            int appWidgetId = intent.getIntExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, AppWidgetManager.INVALID_APPWIDGET_ID);
+            updateAppWidgetRefreshing(context, appWidgetId);
+        } else {
+            int appWidgetId = intent.getIntExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, AppWidgetManager.INVALID_APPWIDGET_ID);
+            if (appWidgetId != AppWidgetManager.INVALID_APPWIDGET_ID) {
+                Bundle options = intent.getBundleExtra("appWidgetOptions");
+                if (options != null) {
+                    int widgetRowSpan = options.getInt("semAppWidgetColumnSpan", 0);
+                    int widgetColumnSpan = options.getInt("semAppWidgetColumnSpan", 0);
+                    if (widgetRowSpan > 0 && widgetColumnSpan > 0) {
+                        AppWidgetManager appWidgetManager = AppWidgetManager.getInstance(context);
+                        updateAppWidget(context, appWidgetManager, appWidgetId, widgetRowSpan, widgetColumnSpan);
+                    }
                 }
             }
         }
@@ -180,5 +232,21 @@ public class CalendarAppWidget extends AppWidgetProvider {
         views.setRemoteAdapter(R.id.eventsListView, eventsIntent);
         views.setEmptyView(R.id.eventsListView, R.id.noEvents);
         views.setTextColor(R.id.noEvents, textColor);
+    }
+
+    private static void setRefreshView(Context context, RemoteViews views, int appWidgetId, boolean darkText, @ColorInt int textColor, Date lastRefreshed) {
+        SimpleDateFormat lastRefreshedDateFormat = new SimpleDateFormat("HH:mm", Locale.getDefault());
+        String lastRefreshedDate = lastRefreshedDateFormat.format(lastRefreshed);
+
+        views.setTextViewText(R.id.lastRefreshDate, lastRefreshedDate);
+        views.setTextColor(R.id.lastRefreshDate, textColor);
+
+        views.setInt(R.id.refreshImage, "setColorFilter", textColor);
+
+        Intent refreshIntent = new Intent(context, CalendarAppWidget.class);
+        refreshIntent.setAction("ACTION_REFRESH");
+        refreshIntent.putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId);
+        PendingIntent refreshPendingIntent = PendingIntent.getBroadcast(context, 0, refreshIntent, PendingIntent.FLAG_IMMUTABLE);
+        views.setOnClickPendingIntent(R.id.refreshLayout, refreshPendingIntent);
     }
 }
