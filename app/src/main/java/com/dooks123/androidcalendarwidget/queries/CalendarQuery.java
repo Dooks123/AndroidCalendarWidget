@@ -30,35 +30,16 @@ public class CalendarQuery {
         Uri contentUri = getCalendarEventsContractUri();
         ContentResolver contentResolver = MainApplication.getContext().getContentResolver();
 
-        TimeZone utcTimeZone = TimeZone.getTimeZone("UTC");
+        Calendar startTime = Calendar.getInstance();
+        startTime.set(Calendar.HOUR_OF_DAY, 0);
+        startTime.set(Calendar.MINUTE, 0);
+        startTime.set(Calendar.SECOND, 0);
 
-        Calendar localStartTime = Calendar.getInstance();
-        localStartTime.set(Calendar.HOUR_OF_DAY, 0);
-        localStartTime.set(Calendar.MINUTE, 0);
-        localStartTime.set(Calendar.SECOND, 0);
+        Calendar endTime = Calendar.getInstance();
+        endTime.add(Calendar.DATE, 1);
 
-        Calendar utcStartTime = Calendar.getInstance(utcTimeZone);
-        utcStartTime.set(Calendar.HOUR_OF_DAY, 0);
-        utcStartTime.set(Calendar.MINUTE, 0);
-        utcStartTime.set(Calendar.SECOND, 0);
-
-        Calendar localEndTime = Calendar.getInstance();
-        localEndTime.add(Calendar.DATE, 1);
-
-        Calendar utcEndTime = Calendar.getInstance(utcTimeZone);
-        utcEndTime.add(Calendar.DATE, 1);
-
-        String localSelection = "(" + CalendarContract.Events.DTSTART + " >= " + localStartTime.getTimeInMillis()
-                + " AND " + CalendarContract.Events.DTEND + " <= " + localEndTime.getTimeInMillis()
-                + " AND " + CalendarContract.Events.DELETED + " != 1"
-                + " AND " + CalendarContract.Events.EVENT_TIMEZONE + " != 'UTC')";
-
-        String utcSelection = "(" + CalendarContract.Events.DTSTART + " >= " + utcStartTime.getTimeInMillis()
-                + " AND " + CalendarContract.Events.DTEND + " <= " + utcEndTime.getTimeInMillis()
-                + " AND " + CalendarContract.Events.DELETED + " != 1"
-                + " AND " + CalendarContract.Events.EVENT_TIMEZONE + " = 'UTC')";
-
-        String selection = localSelection + " OR " + utcSelection;
+        String selection = "strftime('%Y-%m-%d', " + CalendarContract.Events.DTSTART + " / 1000, 'unixepoch', 'utc', 'localtime') = strftime('%Y-%m-%d', 'now', 'localtime') "
+                + " AND " + CalendarContract.Events.DELETED + " != 1";
 
         List<CalendarEvent> events = new ArrayList<>();
 
