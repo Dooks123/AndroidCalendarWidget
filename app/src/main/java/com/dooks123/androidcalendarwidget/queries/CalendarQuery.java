@@ -38,7 +38,13 @@ public class CalendarQuery {
         Calendar endTime = Calendar.getInstance();
         endTime.add(Calendar.DATE, 1);
 
-        String selection = "strftime('%Y-%m-%d', substr(" + CalendarContract.Events.DTSTART + ", 1, 10), 'unixepoch', 'utc', 'localtime') = strftime('%Y-%m-%d', 'now', 'localtime') "
+        String selection =
+                "  ( "
+                + "  strftime('%Y-%m-%d', " + CalendarContract.Events.DTSTART + " / 1000, 'unixepoch', 'utc', 'localtime') = strftime('%Y-%m-%d', 'now', 'localtime')"
+                + "  OR ( strftime('%m-%d', " + CalendarContract.Events.DTSTART + " / 1000, 'unixepoch', 'utc', 'localtime') = strftime('%m-%d', 'now', 'localtime') "
+                + "       AND " + CalendarContract.Events.RRULE + " like '%YEARLY%'"
+                + "     )"
+                + " )"
                 + " AND " + CalendarContract.Events.DELETED + " != 1";
 
         List<CalendarEvent> events = new ArrayList<>();

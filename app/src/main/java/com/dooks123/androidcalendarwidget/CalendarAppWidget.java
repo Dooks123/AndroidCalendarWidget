@@ -5,6 +5,7 @@ import android.appwidget.AppWidgetManager;
 import android.appwidget.AppWidgetProvider;
 import android.content.Context;
 import android.content.Intent;
+import android.graphics.Rect;
 import android.os.Bundle;
 import android.util.Log;
 import android.util.TypedValue;
@@ -57,8 +58,8 @@ public class CalendarAppWidget extends AppWidgetProvider {
 
         setContainer(views, backgroundColor, widgetColumnSpan);
         setDateContainer(views, textColor, widgetRowSpan, widgetColumnSpan);
-        setEventsListView(context, views, appWidgetId, textColor);
-        setRefreshView(context, views, appWidgetId, darkText, textColor, lastRefreshed);
+        setEventsListView(context, views, appWidgetId, textColor, widgetColumnSpan);
+        setRefreshView(context, views, appWidgetId, darkText, textColor, lastRefreshed, widgetColumnSpan);
 
         Intent openCalendarIntent = new Intent(Intent.ACTION_VIEW, CalendarQuery.getCalendarContractUri());
         PendingIntent openCalendarPendingIntent = PendingIntent.getActivity(context, 0, openCalendarIntent, PendingIntent.FLAG_IMMUTABLE);
@@ -181,13 +182,10 @@ public class CalendarAppWidget extends AppWidgetProvider {
             @ColorInt int backgroundColor,
             int widgetColumnSpan
     ) {
-        boolean large = widgetColumnSpan > 2;
-        int dp8 = ResourceHelper.getDP(8);
-        int dp20 = ResourceHelper.getDP(20);
-        int paddingLeftRight = large ? dp20 : dp8;
-
         views.setInt(android.R.id.background, "setBackgroundColor", backgroundColor);
-        views.setViewPadding(android.R.id.background, paddingLeftRight, 0, paddingLeftRight, 0);
+
+        Rect padding = getWidgetHorizontalPadding(widgetColumnSpan);
+        views.setViewPadding(android.R.id.background, padding.left, 0, 0, 0);
     }
 
     private static void setDateContainer(
@@ -225,16 +223,33 @@ public class CalendarAppWidget extends AppWidgetProvider {
         }
     }
 
-    private static void setEventsListView(Context context, RemoteViews views, int appWidgetId, @ColorInt int textColor) {
+    private static void setEventsListView(
+            Context context,
+            RemoteViews views,
+            int appWidgetId,
+            @ColorInt int textColor,
+            int widgetColumnSpan
+    ) {
         Intent eventsIntent = new Intent(context, WidgetEventRemoteViewsService.class);
         eventsIntent.putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId);
 
         views.setRemoteAdapter(R.id.eventsListView, eventsIntent);
         views.setEmptyView(R.id.eventsListView, R.id.noEvents);
         views.setTextColor(R.id.noEvents, textColor);
+
+        Rect padding = getWidgetHorizontalPadding(widgetColumnSpan);
+        views.setViewPadding(R.id.eventsListView, 0, 0, padding.right, 0);
     }
 
-    private static void setRefreshView(Context context, RemoteViews views, int appWidgetId, boolean darkText, @ColorInt int textColor, Date lastRefreshed) {
+    private static void setRefreshView(
+            Context context,
+            RemoteViews views,
+            int appWidgetId,
+            boolean darkText,
+            @ColorInt int textColor,
+            Date lastRefreshed,
+            int widgetColumnSpan
+    ) {
         SimpleDateFormat lastRefreshedDateFormat = new SimpleDateFormat("HH:mm", Locale.getDefault());
         String lastRefreshedDate = lastRefreshedDateFormat.format(lastRefreshed);
 
@@ -248,5 +263,17 @@ public class CalendarAppWidget extends AppWidgetProvider {
         refreshIntent.putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId);
         PendingIntent refreshPendingIntent = PendingIntent.getBroadcast(context, 0, refreshIntent, PendingIntent.FLAG_IMMUTABLE);
         views.setOnClickPendingIntent(R.id.refreshLayout, refreshPendingIntent);
+
+        Rect padding = getWidgetHorizontalPadding(widgetColumnSpan);
+        views.setViewPadding(R.id.refreshLayout, 0, ResourceHelper.getDP(8), padding.right, 0);
+    }
+
+    private static Rect getWidgetHorizontalPadding(int widgetColumnSpan) {
+        boolean large = widgetColumnSpan > 2;
+        int dp8 = ResourceHelper.getDP(8);
+        int dp20 = ResourceHelper.getDP(20);
+        int padding = large ? dp20 : dp8;
+
+        return new Rect(padding, 0, padding, 0);
     }
 }

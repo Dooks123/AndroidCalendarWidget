@@ -12,7 +12,7 @@ android {
         applicationId "com.dooks123.androidcalendarwidget"
         minSdk 31
         targetSdk 33
-        versionCode 7
+        versionCode 9
         versionName "1.0"
 
         vectorDrawables {
