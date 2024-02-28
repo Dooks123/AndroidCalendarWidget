@@ -44,6 +44,12 @@ public class CalendarQuery {
                 + "  OR ( strftime('%m-%d', " + CalendarContract.Events.DTSTART + " / 1000, 'unixepoch', 'utc', 'localtime') = strftime('%m-%d', 'now', 'localtime') "
                 + "       AND " + CalendarContract.Events.RRULE + " like '%YEARLY%'"
                 + "     )"
+                + "  OR ( strftime('%d', " + CalendarContract.Events.DTSTART + " / 1000, 'unixepoch', 'utc', 'localtime') = strftime('%d', 'now', 'localtime') "
+                + "       AND " + CalendarContract.Events.RRULE + " like '%MONTHLY%'"
+                + "     )"
+                + "  OR ( strftime('%w', " + CalendarContract.Events.DTSTART + " / 1000, 'unixepoch', 'utc', 'localtime') = strftime('%w', 'now', 'localtime') "
+                + "       AND " + CalendarContract.Events.RRULE + " like '%WEEKLY%'"
+                + "     )"
                 + " )"
                 + " AND " + CalendarContract.Events.DELETED + " != 1";
 
